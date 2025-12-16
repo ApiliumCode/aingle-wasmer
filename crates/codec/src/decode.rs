@@ -1,6 +1,6 @@
 //! Decoding functionality
 
-use aingle_wasm_types::{
+use aingle_wasmer_common::{
     EnvelopeHeader, EnvelopeError, WasmError, DeserializeError,
 };
 use crate::checksum::compute_checksum;

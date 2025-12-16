@@ -18,7 +18,7 @@ pub use encode::*;
 pub use decode::*;
 pub use checksum::*;
 
-pub use aingle_wasm_types::{
+pub use aingle_wasmer_common::{
     EnvelopeHeader, EnvelopeFlags, WasmSlice, WasmResult,
     WasmEncode, WasmDecode, WasmError,
 };

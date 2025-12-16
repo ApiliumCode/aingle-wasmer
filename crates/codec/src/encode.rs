@@ -1,6 +1,6 @@
 //! Encoding functionality
 
-use aingle_wasm_types::{EnvelopeHeader, WasmError, WasmSlice};
+use aingle_wasmer_common::{EnvelopeHeader, WasmError, WasmSlice};
 use crate::checksum::compute_checksum;
 
 /// Encoder for WASM messages
@@ -29,7 +29,7 @@ impl<'a> Encoder<'a> {
     pub fn write_bytes(&mut self, bytes: &[u8]) -> Result<(), WasmError> {
         if self.remaining() < bytes.len() {
             return Err(WasmError::Serialize(
-                aingle_wasm_types::SerializeError::BufferTooSmall {
+                aingle_wasmer_common::SerializeError::BufferTooSmall {
                     needed: bytes.len(),
                     available: self.remaining(),
                 }
@@ -76,7 +76,7 @@ pub fn encode_with_envelope(
 
     if output.len() < total_size {
         return Err(WasmError::Serialize(
-            aingle_wasm_types::SerializeError::BufferTooSmall {
+            aingle_wasmer_common::SerializeError::BufferTooSmall {
                 needed: total_size,
                 available: output.len(),
             }

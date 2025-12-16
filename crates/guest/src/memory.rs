@@ -1,13 +1,15 @@
 //! Memory management utilities for WASM guests
 
-use aingle_wasm_types::{WasmSlice, WasmResult, WasmError};
-use aingle_wasm_codec::{encode_with_envelope, decode_envelope};
+use aingle_wasmer_common::{WasmSlice, WasmResult, WasmError};
+use aingle_wasmer_codec::{encode_with_envelope, decode_envelope};
 use crate::arena::arena_alloc_copy;
 
-/// Read input arguments from the host
+/// Read input arguments from the host (raw envelope version)
 ///
 /// Decodes the envelope and returns the payload bytes.
-pub fn host_args(ptr: u32, len: u32) -> Result<&'static [u8], WasmError> {
+/// This is the internal version that uses our envelope protocol.
+/// For aingle compatibility, use the `host_args` function from `compat` module.
+pub fn host_args_envelope(ptr: u32, len: u32) -> Result<&'static [u8], WasmError> {
     if len == 0 {
         return Ok(&[]);
     }
@@ -49,7 +51,7 @@ pub fn return_ok(data: &[u8]) -> u64 {
 
 /// Return an error result to the host
 pub fn return_err(message: &[u8]) -> u64 {
-    use aingle_wasm_types::EnvelopeFlags;
+    use aingle_wasmer_common::EnvelopeFlags;
 
     let mut buffer = [0u8; 256];
     let flags = EnvelopeFlags::IsError as u8;

@@ -3,7 +3,7 @@
 //! Host-side WASM execution engine for the AIngle conductor.
 //!
 //! ## Features
-//! - Module caching with PLRU eviction
+//! - Module caching with filesystem persistence
 //! - Metering for resource limits
 //! - Sandboxed execution
 //! - Zero-copy data transfer where possible
@@ -11,36 +11,36 @@
 //! ## Example
 //!
 //! ```ignore
-//! use aingle_wasm_host::prelude::*;
+//! use aingle_wasmer_host::prelude::*;
 //!
-//! let engine = WasmEngine::new(EngineConfig::default())?;
-//! let module = engine.compile(wasm_bytes)?;
-//! let instance = engine.instantiate(&module, imports)?;
-//!
-//! let result: Output = instance.call("my_function", input)?;
+//! let cache = ModuleCache::new(None);
+//! let module = cache.get(key, wasm_bytes)?;
 //! ```
 
 #![warn(missing_docs)]
 
 mod engine;
 mod instance;
-mod cache;
 mod env;
 mod guest;
 mod error;
+
+/// Module caching with filesystem support
+pub mod module;
 
 pub mod prelude;
 
 pub use engine::*;
 pub use instance::*;
-pub use cache::*;
 pub use env::*;
 pub use guest::*;
 pub use error::*;
+pub use module::ModuleCache;
 
-pub use aingle_wasm_types::{
-    WasmError, WasmSlice, WasmResult,
-    WasmEncode, WasmDecode,
+pub use aingle_wasmer_common::{
+    WasmError, WasmErrorInner, WasmSlice, WasmResult,
+    WasmEncode, WasmDecode, DoubleUSize,
+    SerializeError, DeserializeError, HostCallError, GuestCallError,
 };
 
 /// Default metering limit: 100 billion operations

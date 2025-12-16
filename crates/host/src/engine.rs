@@ -1,7 +1,7 @@
 //! WASM engine configuration and management
 
-use crate::{DEFAULT_METERING_LIMIT, ModuleCache, HostError};
-use parking_lot::RwLock;
+use crate::{DEFAULT_METERING_LIMIT, HostError};
+use crate::module::ModuleCache;
 use std::sync::Arc;
 
 #[cfg(feature = "wasmer_sys_dev")]
@@ -23,8 +23,8 @@ pub struct EngineConfig {
     pub metering_limit: u64,
     /// Enable NaN canonicalization for determinism
     pub canonicalize_nans: bool,
-    /// Maximum cache size in bytes
-    pub cache_size: usize,
+    /// Optional cache directory path
+    pub cache_path: Option<std::path::PathBuf>,
     /// Static memory bound (for iOS compatibility)
     pub static_memory_bound: u32,
 }
@@ -34,7 +34,7 @@ impl Default for EngineConfig {
         Self {
             metering_limit: DEFAULT_METERING_LIMIT,
             canonicalize_nans: true,
-            cache_size: 256 * 1024 * 1024, // 256 MB
+            cache_path: None,
             static_memory_bound: 0x4000,
         }
     }
@@ -45,7 +45,7 @@ pub struct WasmEngine {
     #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
     inner: Engine,
     config: EngineConfig,
-    cache: Arc<RwLock<ModuleCache>>,
+    cache: Arc<ModuleCache>,
 }
 
 impl WasmEngine {
@@ -81,7 +81,7 @@ impl WasmEngine {
         Ok(Self {
             inner: engine,
             config: config.clone(),
-            cache: Arc::new(RwLock::new(ModuleCache::new(config.cache_size))),
+            cache: Arc::new(ModuleCache::new(config.cache_path.clone())),
         })
     }
 
@@ -92,26 +92,10 @@ impl WasmEngine {
             .map_err(|e| HostError::Compilation(e.to_string()))
     }
 
-    /// Compile with caching
+    /// Compile with caching using a 32-byte key
     #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
-    pub fn compile_cached(&self, key: &[u8], wasm: &[u8]) -> Result<Module, HostError> {
-        // Check cache first
-        {
-            let cache = self.cache.read();
-            if let Some(module) = cache.get(key) {
-                return Ok(module.clone());
-            }
-        }
-
-        // Compile and cache
-        let module = self.compile(wasm)?;
-
-        {
-            let mut cache = self.cache.write();
-            cache.insert(key.to_vec(), module.clone());
-        }
-
-        Ok(module)
+    pub fn compile_cached(&self, key: [u8; 32], wasm: &[u8]) -> Result<Arc<Module>, HostError> {
+        self.cache.get(key, wasm)
     }
 
     /// Get a reference to the inner Wasmer engine
@@ -126,9 +110,9 @@ impl WasmEngine {
     }
 
     /// Clear the module cache
+    #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
     pub fn clear_cache(&self) {
-        let mut cache = self.cache.write();
-        cache.clear();
+        self.cache.clear();
     }
 }
 

@@ -1,8 +1,8 @@
 [package]
-name = "aingle_wasm_host"
+name = "aingle_wasmer_host"
 version.workspace = true
 description = "Host-side WASM execution engine for AIngle"
-documentation = "https://docs.rs/aingle_wasm_host"
+documentation = "https://docs.rs/aingle_wasmer_host"
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
@@ -10,14 +10,19 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
-aingle_wasm_types.workspace = true
-aingle_wasm_codec.workspace = true
+aingle_wasmer_common.workspace = true
+aingle_wasmer_codec.workspace = true
 wasmer = { workspace = true, optional = true }
 wasmer-middlewares = { workspace = true, optional = true }
 parking_lot.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
 bytes.workspace = true
+
+# Serialization for aingle compatibility
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+rmp-serde = "1.3"
 
 [dev-dependencies]
 criterion.workspace = true
@@ -27,7 +32,7 @@ tempfile.workspace = true
 default = ["wasmer_sys_dev"]
 wasmer_sys_dev = ["wasmer/sys", "wasmer/cranelift", "wasmer-middlewares"]
 wasmer_sys_prod = ["wasmer/sys", "wasmer/llvm", "wasmer-middlewares"]
-error_as_host = ["aingle_wasm_types/std"]
+error_as_host = ["aingle_wasmer_common/std"]
 
 [[bench]]
 name = "instance"

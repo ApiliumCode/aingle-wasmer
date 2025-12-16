@@ -1,17 +1,19 @@
 [package]
-name = "aingle_wasm_types"
+name = "aingle_wasmer_common"
 version.workspace = true
 description = "Core types for AIngle WASM runtime - zero dependencies"
-documentation = "https://docs.rs/aingle_wasm_types"
+documentation = "https://docs.rs/aingle_wasmer_common"
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
 authors.workspace = true
 edition.workspace = true
 
-# No dependencies - pure Rust types
 [dependencies]
+# Optional: aingle middleware bytes integration for SerializedBytesError
+aingle_middleware_bytes = { version = "0.0.3", optional = true }
 
 [features]
 default = []
 std = []
+middleware_bytes = ["aingle_middleware_bytes", "std"]

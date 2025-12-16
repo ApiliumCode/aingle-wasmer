@@ -39,43 +39,78 @@ dependencies = [
 ]
 
 [[package]]
-name = "aingle_wasm_codec"
-version = "0.1.0"
+name = "aingle_middleware_bytes"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c03f4a0a5203dc8fb86097bc33c02a54bd5813c8d3d67595fe3e9d0a2272ff0"
 dependencies = [
- "aingle_wasm_types",
+ "aingle_middleware_bytes_derive",
+ "rmp-serde 0.14.4",
+ "serde",
+ "serde-transcode",
+ "serde_bytes",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "aingle_middleware_bytes_derive"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05ab1e16ded0d7d76ccf32e8e194bedf284237c24d8a5fa46fe60a01f3ba4cba"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "aingle_wasmer_codec"
+version = "0.0.1"
+dependencies = [
+ "aingle_wasmer_common",
  "bytes",
  "crc32fast",
  "criterion",
 ]
 
 [[package]]
-name = "aingle_wasm_guest"
-version = "0.1.0"
+name = "aingle_wasmer_common"
+version = "0.0.1"
 dependencies = [
- "aingle_wasm_codec",
- "aingle_wasm_types",
- "bumpalo",
+ "aingle_middleware_bytes",
 ]
 
 [[package]]
-name = "aingle_wasm_host"
-version = "0.1.0"
+name = "aingle_wasmer_guest"
+version = "0.0.1"
 dependencies = [
- "aingle_wasm_codec",
- "aingle_wasm_types",
+ "aingle_middleware_bytes",
+ "aingle_wasmer_codec",
+ "aingle_wasmer_common",
+ "bumpalo",
+ "rmp-serde 1.3.0",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "aingle_wasmer_host"
+version = "0.0.1"
+dependencies = [
+ "aingle_wasmer_codec",
+ "aingle_wasmer_common",
  "bytes",
  "criterion",
  "parking_lot",
+ "rmp-serde 1.3.0",
+ "serde",
+ "serde_bytes",
  "tempfile",
  "thiserror 2.0.12",
  "tracing",
  "wasmer",
  "wasmer-middlewares",
 ]
-
-[[package]]
-name = "aingle_wasm_types"
-version = "0.1.0"
 
 [[package]]
 name = "anes"
@@ -1691,6 +1726,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "rmp"
+version = "0.8.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "228ed7c16fa39782c3b3468e974aec2795e9089153cd08ee2e9aefb3613334c4"
+dependencies = [
+ "byteorder",
+ "num-traits",
+ "paste",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ce7d70c926fe472aed493b902010bccc17fa9f7284145cb8772fd22fdb052d8"
+dependencies = [
+ "byteorder",
+ "rmp",
+ "serde",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52e599a477cf9840e92f2cde9a7189e67b42c57532749bf90aea6ec10facd4db"
+dependencies = [
+ "byteorder",
+ "rmp",
+ "serde",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1811,11 +1879,21 @@ checksum = "56e6fa9c48d24d85fb3de5ad847117517440f6beceb7798af16b4a87d616b8d0"
 
 [[package]]
 name = "serde"
-version = "1.0.219"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
+checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
+ "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-transcode"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "590c0e25c2a5bb6e85bf5c1bce768ceb86b316e7a01bdf07d2cb4ec2271990e2"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -1830,10 +1908,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_derive"
-version = "1.0.219"
+name = "serde_bytes"
+version = "0.11.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
+checksum = "a5d440709e79d88e51ac01c4b72fc6cb7314017bb7da9eeff678aa94c10e3ea8"
+dependencies = [
+ "serde",
+ "serde_core",
+]
+
+[[package]]
+name = "serde_core"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1846,6 +1943,7 @@ version = "1.0.140"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20068b6e96dc6c9bd23e01df8827e6c7e1f2fddd43c21810382803c136b99373"
 dependencies = [
+ "indexmap",
  "itoa",
  "memchr",
  "ryu",

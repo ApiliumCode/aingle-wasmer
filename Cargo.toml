@@ -4,7 +4,7 @@ default-members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.0.1"
 homepage = "https://apilium.com"
 repository = "https://github.com/ApiliumCode/aingle-wasmer"
 license = "Apache-2.0"
@@ -12,17 +12,11 @@ authors = ["AIngle Core Dev Team <devcore@apilium.com>"]
 edition = "2021"
 
 [workspace.dependencies]
-# Types crate (no external deps)
-aingle_wasm_types = { version = "=0.1.0", path = "crates/types" }
-
-# Codec crate
-aingle_wasm_codec = { version = "=0.1.0", path = "crates/codec" }
-
-# Guest crate
-aingle_wasm_guest = { version = "=0.1.0", path = "crates/guest" }
-
-# Host crate
-aingle_wasm_host = { version = "=0.1.0", path = "crates/host", default-features = false }
+# Internal crates (compatible names)
+aingle_wasmer_common = { version = "=0.0.1", path = "crates/common" }
+aingle_wasmer_codec = { version = "=0.0.1", path = "crates/codec" }
+aingle_wasmer_guest = { version = "=0.0.1", path = "crates/guest" }
+aingle_wasmer_host = { version = "=0.0.1", path = "crates/host", default-features = false }
 
 # Serialization - Zero-copy
 capnp = "0.20"

@@ -2,9 +2,9 @@
 
 use crate::{WasmEngine, HostError, Env};
 #[allow(unused_imports)]
-use aingle_wasm_types::WasmSlice;
-use aingle_wasm_types::WasmResult;
-use aingle_wasm_codec::{encode_with_envelope, decode_envelope};
+use aingle_wasmer_common::WasmSlice;
+use aingle_wasmer_common::WasmResult;
+use aingle_wasmer_codec::{encode_with_envelope, decode_envelope};
 
 #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
 use wasmer::{Module, Instance, Store, imports, Memory, MemoryType};

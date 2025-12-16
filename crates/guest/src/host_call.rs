@@ -1,7 +1,7 @@
 //! Host function calling utilities
 
-use aingle_wasm_types::{WasmResult, WasmError, HostCallError};
-use aingle_wasm_codec::{encode_with_envelope, decode_envelope};
+use aingle_wasmer_common::{WasmResult, WasmError, HostCallError};
+use aingle_wasmer_codec::{encode_with_envelope, decode_envelope};
 use crate::arena::arena_alloc_copy;
 
 /// Call a host function with encoded arguments

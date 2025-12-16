@@ -1,5 +1,6 @@
 //! Error types for AIngle WASM runtime
 
+use alloc::string::{String, ToString};
 use core::fmt;
 
 /// Primary error type for WASM operations
@@ -15,8 +16,44 @@ pub enum WasmError {
     HostCall(HostCallError),
     /// Guest function call failed
     GuestCall(GuestCallError),
-    /// Generic error with message
-    Guest(WasmErrorInner),
+    /// Generic guest error with string message (for aingle compatibility)
+    Guest(String),
+    /// Structured guest error with location info
+    GuestStructured(WasmErrorInner),
+}
+
+impl WasmError {
+    /// Create a new guest error from a string
+    pub fn guest<S: Into<String>>(msg: S) -> Self {
+        WasmError::Guest(msg.into())
+    }
+}
+
+impl From<String> for WasmError {
+    fn from(s: String) -> Self {
+        WasmError::Guest(s)
+    }
+}
+
+impl From<&str> for WasmError {
+    fn from(s: &str) -> Self {
+        WasmError::Guest(s.to_string())
+    }
+}
+
+impl From<core::convert::Infallible> for WasmError {
+    fn from(_: core::convert::Infallible) -> Self {
+        // Infallible can never be instantiated, so this is unreachable
+        unreachable!()
+    }
+}
+
+/// Convert SerializedBytesError to WasmError when middleware_bytes feature is enabled
+#[cfg(feature = "middleware_bytes")]
+impl From<aingle_middleware_bytes::SerializedBytesError> for WasmError {
+    fn from(e: aingle_middleware_bytes::SerializedBytesError) -> Self {
+        WasmError::Guest(alloc::format!("SerializedBytesError: {}", e))
+    }
 }
 
 /// Inner error with optional context
@@ -176,7 +213,8 @@ impl fmt::Display for WasmError {
             WasmError::Memory(e) => write!(f, "memory error: {:?}", e),
             WasmError::HostCall(e) => write!(f, "host call error: {:?}", e),
             WasmError::GuestCall(e) => write!(f, "guest call error: {:?}", e),
-            WasmError::Guest(inner) => {
+            WasmError::Guest(msg) => write!(f, "guest error: {}", msg),
+            WasmError::GuestStructured(inner) => {
                 write!(f, "[{:?}] {}", inner.kind, inner.message.as_str())?;
                 if let (Some(file), Some(line)) = (inner.file, inner.line) {
                     write!(f, " at {}:{}", file, line)?;
@@ -191,7 +229,7 @@ impl fmt::Display for WasmError {
 #[macro_export]
 macro_rules! wasm_error {
     ($kind:expr, $msg:literal) => {
-        $crate::WasmError::Guest($crate::WasmErrorInner::new($kind, $msg)
+        $crate::WasmError::GuestStructured($crate::WasmErrorInner::new($kind, $msg)
             .with_location(file!(), line!()))
     };
     ($msg:literal) => {

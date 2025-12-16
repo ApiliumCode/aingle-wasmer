@@ -54,25 +54,25 @@ pub enum HostError {
     Cache(String),
 }
 
-impl From<HostError> for aingle_wasm_types::WasmError {
+impl From<HostError> for aingle_wasmer_common::WasmError {
     fn from(err: HostError) -> Self {
-        use aingle_wasm_types::{GuestCallError, HostCallError};
+        use aingle_wasmer_common::{GuestCallError, HostCallError};
 
         match err {
             HostError::FunctionNotFound(_) => {
-                aingle_wasm_types::WasmError::GuestCall(GuestCallError::FunctionNotExported)
+                aingle_wasmer_common::WasmError::GuestCall(GuestCallError::FunctionNotExported)
             }
             HostError::InvalidReturn => {
-                aingle_wasm_types::WasmError::GuestCall(GuestCallError::InvalidReturn)
+                aingle_wasmer_common::WasmError::GuestCall(GuestCallError::InvalidReturn)
             }
             HostError::MeteringExceeded => {
-                aingle_wasm_types::WasmError::GuestCall(GuestCallError::MeteringExceeded)
+                aingle_wasmer_common::WasmError::GuestCall(GuestCallError::MeteringExceeded)
             }
             HostError::GuestError(_) => {
-                aingle_wasm_types::WasmError::GuestCall(GuestCallError::Panic)
+                aingle_wasmer_common::WasmError::GuestCall(GuestCallError::Panic)
             }
             _ => {
-                aingle_wasm_types::WasmError::HostCall(HostCallError::HostError(0))
+                aingle_wasmer_common::WasmError::HostCall(HostCallError::HostError(0))
             }
         }
     }

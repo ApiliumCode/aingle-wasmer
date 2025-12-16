@@ -1,8 +1,8 @@
 [package]
-name = "aingle_wasm_codec"
+name = "aingle_wasmer_codec"
 version.workspace = true
 description = "Zero-copy serialization codec for AIngle WASM"
-documentation = "https://docs.rs/aingle_wasm_codec"
+documentation = "https://docs.rs/aingle_wasmer_codec"
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
@@ -10,7 +10,7 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
-aingle_wasm_types.workspace = true
+aingle_wasmer_common.workspace = true
 crc32fast.workspace = true
 bytes.workspace = true
 
