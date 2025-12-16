@@ -79,18 +79,28 @@ impl From<ExternIO> for Vec<u8> {
 /// * `store` - Mutable reference to the Wasmer store
 /// * `instance` - Arc reference to the WASM instance
 /// * `name` - Name of the function to call
-/// * `input` - Input data as ExternIO
+/// * `input` - Input data as anything that can be referenced as bytes
 ///
 /// # Returns
-/// * `Ok(ExternIO)` - The result from the guest function
+/// * `Ok(Vec<u8>)` - The result bytes from the guest function
 /// * `Err(wasmer::RuntimeError)` - If the call fails
+///
+/// # Example
+/// ```ignore
+/// // With ExternIO
+/// let result_bytes = call(&mut store, instance, "my_fn", &extern_io.0)?;
+/// let result = ExternIO(result_bytes);
+///
+/// // With raw bytes
+/// let result_bytes = call(&mut store, instance, "my_fn", &input_bytes)?;
+/// ```
 #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
 pub fn call(
     store: &mut StoreMut<'_>,
     instance: Arc<Instance>,
     name: &str,
-    input: ExternIO,
-) -> Result<ExternIO, wasmer::RuntimeError> {
+    input: impl AsRef<[u8]>,
+) -> Result<Vec<u8>, wasmer::RuntimeError> {
     // Get the memory and allocate function from the instance
     let memory = instance
         .exports
@@ -102,7 +112,7 @@ pub fn call(
         .get_typed_function::<i32, i32>(store, "__hc__allocate_1")
         .map_err(|e| wasmer::RuntimeError::new(format!("Failed to get allocate: {}", e)))?;
 
-    let input_bytes = input.0;
+    let input_bytes = input.as_ref();
     let input_len = input_bytes.len() as i32;
 
     // Allocate memory for input in guest
@@ -110,7 +120,7 @@ pub fn call(
 
     // Write input to guest memory
     let view = memory.view(store);
-    view.write(input_ptr as u64, &input_bytes)
+    view.write(input_ptr as u64, input_bytes)
         .map_err(|e| wasmer::RuntimeError::new(format!("Failed to write input: {}", e)))?;
 
     // Get the target function
@@ -132,7 +142,7 @@ pub fn call(
     let slice = wasm_result.slice();
 
     if slice.is_empty() {
-        return Ok(ExternIO::new(Vec::new()));
+        return Ok(Vec::new());
     }
 
     // Read the result from guest memory
@@ -141,19 +151,21 @@ pub fn call(
     view.read(slice.ptr as u64, &mut result_bytes)
         .map_err(|e| wasmer::RuntimeError::new(format!("Failed to read result: {}", e)))?;
 
-    Ok(ExternIO::new(result_bytes))
+    Ok(result_bytes)
 }
 
-/// Call a guest function with raw bytes (no ExternIO wrapper)
+/// Call a guest function with raw bytes (legacy alias for call)
+///
+/// This is now an alias for `call` since `call` already accepts `&[u8]`.
 #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
+#[deprecated(since = "0.0.2", note = "Use call() directly, it now accepts &[u8]")]
 pub fn call_raw(
     store: &mut StoreMut<'_>,
     instance: Arc<Instance>,
     name: &str,
     input: &[u8],
 ) -> Result<Vec<u8>, wasmer::RuntimeError> {
-    let result = call(store, instance, name, ExternIO::new(input.to_vec()))?;
-    Ok(result.into_vec())
+    call(store, instance, name, input)
 }
 
 /// Consume bytes from guest memory

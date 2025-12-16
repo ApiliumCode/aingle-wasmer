@@ -13,7 +13,10 @@ edition.workspace = true
 # Optional: aingle middleware bytes integration for SerializedBytesError
 aingle_middleware_bytes = { version = "0.0.3", optional = true }
 
+# Serialization support (no_std compatible)
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+
 [features]
 default = []
-std = []
+std = ["serde/std"]
 middleware_bytes = ["aingle_middleware_bytes", "std"]

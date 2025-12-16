@@ -44,6 +44,33 @@ impl Env {
         self.memory.is_some() && self.allocate.is_some() && self.deallocate.is_some()
     }
 
+    /// Consume and deserialize input from guest memory
+    ///
+    /// Reads bytes from guest memory and deserializes them into the expected type.
+    /// This is the main function for receiving typed input from guest code.
+    ///
+    /// # Type Parameters
+    /// * `T` - The type to deserialize into (must implement DeserializeOwned)
+    ///
+    /// # Arguments
+    /// * `store` - Mutable reference to the Wasmer store
+    /// * `guest_ptr` - Pointer to the start of the data in guest memory
+    /// * `len` - Number of bytes to read
+    ///
+    /// # Returns
+    /// * `Ok(T)` - The deserialized value
+    /// * `Err(HostError)` - If memory access or deserialization fails
+    pub fn consume_guest_input<T: DeserializeOwned>(
+        &self,
+        store: &mut StoreMut<'_>,
+        guest_ptr: GuestPtr,
+        len: Len,
+    ) -> Result<T, HostError> {
+        let bytes = self.consume_bytes_from_guest(store, guest_ptr, len)?;
+        rmp_serde::from_slice(&bytes)
+            .map_err(|e| HostError::Serialization(format!("Failed to deserialize input: {}", e)))
+    }
+
     /// Consume bytes from guest memory
     ///
     /// Reads `len` bytes starting at `guest_ptr` from the guest's linear memory.
@@ -57,9 +84,9 @@ impl Env {
     /// # Returns
     /// * `Ok(Vec<u8>)` - The bytes read from guest memory
     /// * `Err(HostError)` - If memory access fails
-    pub fn consume_bytes_from_guest<'a>(
+    pub fn consume_bytes_from_guest(
         &self,
-        store: &'a mut StoreMut<'_>,
+        store: &mut StoreMut<'_>,
         guest_ptr: GuestPtr,
         len: Len,
     ) -> Result<Vec<u8>, HostError> {

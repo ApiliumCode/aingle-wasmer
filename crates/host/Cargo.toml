@@ -29,10 +29,11 @@ criterion.workspace = true
 tempfile.workspace = true
 
 [features]
-default = ["wasmer_sys_dev"]
+default = ["wasmer_sys_dev", "std"]
 wasmer_sys_dev = ["wasmer/sys", "wasmer/cranelift", "wasmer-middlewares"]
 wasmer_sys_prod = ["wasmer/sys", "wasmer/llvm", "wasmer-middlewares"]
-error_as_host = ["aingle_wasmer_common/std"]
+std = ["aingle_wasmer_common/std"]
+error_as_host = ["std"]
 
 [[bench]]
 name = "instance"

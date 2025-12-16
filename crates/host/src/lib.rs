@@ -22,7 +22,8 @@
 mod engine;
 mod env;
 mod error;
-mod guest;
+/// Guest interaction utilities
+pub mod guest;
 mod instance;
 
 /// Module caching with filesystem support

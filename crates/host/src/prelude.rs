@@ -13,7 +13,7 @@ pub use crate::{
     // Environment
     Env,
     // Guest utilities
-    ExternIO,
+    // Note: ExternIO intentionally NOT exported to avoid conflict with aingle_zome_types::ExternIO
     GuestPtr,
     // Errors
     HostError,

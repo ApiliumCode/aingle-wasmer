@@ -8,10 +8,13 @@
 //! - Versioned wire format
 //! - no_std compatible
 
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 
 extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 mod envelope;
 mod error;

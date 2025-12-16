@@ -2,9 +2,10 @@
 
 use alloc::string::{String, ToString};
 use core::fmt;
+use serde::{Deserialize, Serialize};
 
 /// Primary error type for WASM operations
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum WasmError {
     /// Error during serialization
     Serialize(SerializeError),
@@ -18,6 +19,8 @@ pub enum WasmError {
     GuestCall(GuestCallError),
     /// Generic guest error with string message (for aingle compatibility)
     Guest(String),
+    /// Generic host error with string message (for aingle compatibility)
+    Host(String),
     /// Structured guest error with location info
     GuestStructured(WasmErrorInner),
 }
@@ -57,76 +60,109 @@ impl From<aingle_middleware_bytes::SerializedBytesError> for WasmError {
 }
 
 /// Inner error with optional context
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WasmErrorInner {
     /// Error kind
     pub kind: ErrorKind,
     /// Optional file location
-    pub file: Option<&'static str>,
+    pub file: Option<String>,
     /// Optional line number
     pub line: Option<u32>,
-    /// Error message (stored inline for no_std)
-    message: ErrorMessage,
-}
-
-/// Fixed-size error message for no_std compatibility
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ErrorMessage {
-    bytes: [u8; 128],
-    len: u8,
-}
-
-impl ErrorMessage {
-    /// Create from a static string
-    pub const fn from_static(s: &'static str) -> Self {
-        let bytes_slice = s.as_bytes();
-        let len = if bytes_slice.len() > 128 {
-            128
-        } else {
-            bytes_slice.len()
-        };
-
-        let mut bytes = [0u8; 128];
-        let mut i = 0;
-        while i < len {
-            bytes[i] = bytes_slice[i];
-            i += 1;
-        }
-
-        Self {
-            bytes,
-            len: len as u8,
-        }
-    }
-
-    /// Get the message as a string slice
-    pub fn as_str(&self) -> &str {
-        // Safety: we only store valid UTF-8
-        unsafe { core::str::from_utf8_unchecked(&self.bytes[..self.len as usize]) }
-    }
+    /// Error message
+    message: String,
 }
 
 impl WasmErrorInner {
     /// Create a new error with message
-    pub const fn new(kind: ErrorKind, message: &'static str) -> Self {
+    pub fn new(kind: ErrorKind, message: &str) -> Self {
         Self {
             kind,
             file: None,
             line: None,
-            message: ErrorMessage::from_static(message),
+            message: message.to_string(),
         }
     }
 
+    /// Create a new error with message (const-compatible, truncates at 128 chars)
+    pub const fn new_const(kind: ErrorKind, message: &'static str) -> WasmErrorInnerBuilder {
+        WasmErrorInnerBuilder { kind, message }
+    }
+
+    /// Get the message as a string slice
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
     /// Add file location
-    pub const fn with_location(mut self, file: &'static str, line: u32) -> Self {
-        self.file = Some(file);
+    pub fn with_location(mut self, file: &str, line: u32) -> Self {
+        self.file = Some(file.to_string());
         self.line = Some(line);
         self
     }
 }
 
+/// Builder for const context - converts to WasmErrorInner at runtime
+pub struct WasmErrorInnerBuilder {
+    kind: ErrorKind,
+    message: &'static str,
+}
+
+impl WasmErrorInnerBuilder {
+    /// Add file location
+    pub const fn with_location(self, _file: &'static str, _line: u32) -> WasmErrorInnerBuilderWithLocation {
+        WasmErrorInnerBuilderWithLocation {
+            kind: self.kind,
+            message: self.message,
+            file: _file,
+            line: _line,
+        }
+    }
+
+    /// Build into WasmErrorInner
+    pub fn build(self) -> WasmErrorInner {
+        WasmErrorInner {
+            kind: self.kind,
+            file: None,
+            line: None,
+            message: self.message.to_string(),
+        }
+    }
+}
+
+/// Builder with location info
+pub struct WasmErrorInnerBuilderWithLocation {
+    kind: ErrorKind,
+    message: &'static str,
+    file: &'static str,
+    line: u32,
+}
+
+impl WasmErrorInnerBuilderWithLocation {
+    /// Build into WasmErrorInner
+    pub fn build(self) -> WasmErrorInner {
+        WasmErrorInner {
+            kind: self.kind,
+            file: Some(self.file.to_string()),
+            line: Some(self.line),
+            message: self.message.to_string(),
+        }
+    }
+}
+
+impl From<WasmErrorInnerBuilder> for WasmErrorInner {
+    fn from(b: WasmErrorInnerBuilder) -> Self {
+        b.build()
+    }
+}
+
+impl From<WasmErrorInnerBuilderWithLocation> for WasmErrorInner {
+    fn from(b: WasmErrorInnerBuilderWithLocation) -> Self {
+        b.build()
+    }
+}
+
 /// Categories of errors
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum ErrorKind {
     /// Unknown error
@@ -150,7 +186,7 @@ pub enum ErrorKind {
 }
 
 /// Serialization errors
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SerializeError {
     /// Buffer too small for serialization
     BufferTooSmall { needed: usize, available: usize },
@@ -161,7 +197,7 @@ pub enum SerializeError {
 }
 
 /// Deserialization errors
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DeserializeError {
     /// Unexpected end of input
     UnexpectedEof,
@@ -174,7 +210,7 @@ pub enum DeserializeError {
 }
 
 /// Memory errors
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MemoryError {
     /// Allocation failed
     AllocationFailed { requested: usize },
@@ -191,7 +227,7 @@ pub enum MemoryError {
 }
 
 /// Host call errors
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HostCallError {
     /// Function not found
     FunctionNotFound,
@@ -204,7 +240,7 @@ pub enum HostCallError {
 }
 
 /// Guest call errors
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GuestCallError {
     /// Function not exported
     FunctionNotExported,
@@ -225,9 +261,10 @@ impl fmt::Display for WasmError {
             WasmError::HostCall(e) => write!(f, "host call error: {:?}", e),
             WasmError::GuestCall(e) => write!(f, "guest call error: {:?}", e),
             WasmError::Guest(msg) => write!(f, "guest error: {}", msg),
+            WasmError::Host(msg) => write!(f, "host error: {}", msg),
             WasmError::GuestStructured(inner) => {
-                write!(f, "[{:?}] {}", inner.kind, inner.message.as_str())?;
-                if let (Some(file), Some(line)) = (inner.file, inner.line) {
+                write!(f, "[{:?}] {}", inner.kind, inner.message())?;
+                if let (Some(ref file), Some(line)) = (&inner.file, inner.line) {
                     write!(f, " at {}:{}", file, line)?;
                 }
                 Ok(())
@@ -235,6 +272,9 @@ impl fmt::Display for WasmError {
         }
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for WasmError {}
 
 /// Convenience macro for creating errors with location
 #[macro_export]
@@ -254,18 +294,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_error_message() {
-        let msg = ErrorMessage::from_static("test error");
-        assert_eq!(msg.as_str(), "test error");
-    }
-
-    #[test]
     fn test_wasm_error_inner() {
         let err = WasmErrorInner::new(ErrorKind::Validation, "invalid input")
             .with_location("test.rs", 42);
 
         assert_eq!(err.kind, ErrorKind::Validation);
-        assert_eq!(err.file, Some("test.rs"));
+        assert_eq!(err.file, Some("test.rs".to_string()));
         assert_eq!(err.line, Some(42));
+        assert_eq!(err.message(), "invalid input");
+    }
+
+    #[test]
+    fn test_wasm_error_display() {
+        let err = WasmError::Guest("test error".to_string());
+        assert_eq!(format!("{}", err), "guest error: test error");
+
+        let err = WasmError::Host("host error".to_string());
+        assert_eq!(format!("{}", err), "host error: host error");
+    }
+
+    #[test]
+    fn test_wasm_error_from_string() {
+        let err: WasmError = "test".into();
+        assert!(matches!(err, WasmError::Guest(_)));
     }
 }

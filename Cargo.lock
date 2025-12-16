@@ -78,6 +78,7 @@ name = "aingle_wasmer_common"
 version = "0.0.1"
 dependencies = [
  "aingle_middleware_bytes",
+ "serde",
 ]
 
 [[package]]
