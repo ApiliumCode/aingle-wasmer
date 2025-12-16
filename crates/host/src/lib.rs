@@ -20,10 +20,10 @@
 #![warn(missing_docs)]
 
 mod engine;
-mod instance;
 mod env;
-mod guest;
 mod error;
+mod guest;
+mod instance;
 
 /// Module caching with filesystem support
 pub mod module;
@@ -31,16 +31,15 @@ pub mod module;
 pub mod prelude;
 
 pub use engine::*;
-pub use instance::*;
 pub use env::*;
-pub use guest::*;
 pub use error::*;
+pub use guest::*;
+pub use instance::*;
 pub use module::ModuleCache;
 
 pub use aingle_wasmer_common::{
-    WasmError, WasmErrorInner, WasmSlice, WasmResult,
-    WasmEncode, WasmDecode, DoubleUSize,
-    SerializeError, DeserializeError, HostCallError, GuestCallError,
+    DeserializeError, DoubleUSize, GuestCallError, HostCallError, SerializeError, WasmDecode,
+    WasmEncode, WasmError, WasmErrorInner, WasmResult, WasmSlice,
 };
 
 /// Default metering limit: 100 billion operations

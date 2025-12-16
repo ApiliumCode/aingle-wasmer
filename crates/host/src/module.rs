@@ -112,9 +112,7 @@ impl ModuleCache {
 
         // Deserialize the module
         // Note: This is unsafe as it loads pre-compiled code
-        unsafe {
-            Module::deserialize(&self.engine, &bytes).ok()
-        }
+        unsafe { Module::deserialize(&self.engine, &bytes).ok() }
     }
 
     /// Save a module to the filesystem cache

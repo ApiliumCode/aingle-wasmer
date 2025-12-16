@@ -71,9 +71,7 @@ impl From<HostError> for aingle_wasmer_common::WasmError {
             HostError::GuestError(_) => {
                 aingle_wasmer_common::WasmError::GuestCall(GuestCallError::Panic)
             }
-            _ => {
-                aingle_wasmer_common::WasmError::HostCall(HostCallError::HostError(0))
-            }
+            _ => aingle_wasmer_common::WasmError::HostCall(HostCallError::HostError(0)),
         }
     }
 }

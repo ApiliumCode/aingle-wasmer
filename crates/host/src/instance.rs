@@ -1,13 +1,13 @@
 //! WASM instance management
 
-use crate::{WasmEngine, HostError, Env};
+use crate::{Env, HostError, WasmEngine};
+use aingle_wasmer_codec::{decode_envelope, encode_with_envelope};
+use aingle_wasmer_common::WasmResult;
 #[allow(unused_imports)]
 use aingle_wasmer_common::WasmSlice;
-use aingle_wasmer_common::WasmResult;
-use aingle_wasmer_codec::{encode_with_envelope, decode_envelope};
 
 #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
-use wasmer::{Module, Instance, Store, imports, Memory, MemoryType};
+use wasmer::{imports, Instance, Memory, MemoryType, Module, Store};
 
 /// A WASM instance ready for execution
 pub struct WasmInstance {
@@ -40,14 +40,19 @@ impl WasmInstance {
         let instance = Instance::new(&mut store, module, &import_object)
             .map_err(|e| HostError::Instantiation(e.to_string()))?;
 
-        Ok(Self { instance, store, env })
+        Ok(Self {
+            instance,
+            store,
+            env,
+        })
     }
 
     /// Call a function on the instance
     #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
     pub fn call_raw(&mut self, name: &str, args: &[u8]) -> Result<Vec<u8>, HostError> {
         // Get the function
-        let func = self.instance
+        let func = self
+            .instance
             .exports
             .get_function(name)
             .map_err(|_| HostError::FunctionNotFound(name.to_string()))?;
@@ -58,7 +63,8 @@ impl WasmInstance {
             .map_err(|e| HostError::Serialization(format!("{:?}", e)))?;
 
         // Get memory for writing
-        let memory = self.instance
+        let memory = self
+            .instance
             .exports
             .get_memory("memory")
             .map_err(|_| HostError::MemoryNotFound)?;
@@ -72,10 +78,15 @@ impl WasmInstance {
         }
 
         // Call the function
-        let result = func.call(&mut self.store, &[
-            wasmer::Value::I32(ptr as i32),
-            wasmer::Value::I32(len as i32),
-        ]).map_err(|e| HostError::Runtime(e.to_string()))?;
+        let result = func
+            .call(
+                &mut self.store,
+                &[
+                    wasmer::Value::I32(ptr as i32),
+                    wasmer::Value::I32(len as i32),
+                ],
+            )
+            .map_err(|e| HostError::Runtime(e.to_string()))?;
 
         // Parse result
         let result_packed = match result.first() {
@@ -107,7 +118,7 @@ impl WasmInstance {
 
         if wasm_result.is_err() || envelope.header.is_error() {
             return Err(HostError::GuestError(
-                String::from_utf8_lossy(envelope.payload).to_string()
+                String::from_utf8_lossy(envelope.payload).to_string(),
             ));
         }
 

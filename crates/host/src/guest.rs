@@ -3,8 +3,8 @@
 //! Functions for calling guest WASM functions and transferring data.
 
 use crate::HostError;
-use aingle_wasmer_common::{WasmSlice, WasmResult};
-use serde::{Serialize, de::DeserializeOwned};
+use aingle_wasmer_common::{WasmResult, WasmSlice};
+use serde::{de::DeserializeOwned, Serialize};
 use std::sync::Arc;
 
 #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
@@ -92,10 +92,14 @@ pub fn call(
     input: ExternIO,
 ) -> Result<ExternIO, wasmer::RuntimeError> {
     // Get the memory and allocate function from the instance
-    let memory = instance.exports.get_memory("memory")
+    let memory = instance
+        .exports
+        .get_memory("memory")
         .map_err(|e| wasmer::RuntimeError::new(format!("Failed to get memory: {}", e)))?;
 
-    let allocate = instance.exports.get_typed_function::<i32, i32>(store, "__hc__allocate_1")
+    let allocate = instance
+        .exports
+        .get_typed_function::<i32, i32>(store, "__hc__allocate_1")
         .map_err(|e| wasmer::RuntimeError::new(format!("Failed to get allocate: {}", e)))?;
 
     let input_bytes = input.0;
@@ -110,14 +114,17 @@ pub fn call(
         .map_err(|e| wasmer::RuntimeError::new(format!("Failed to write input: {}", e)))?;
 
     // Get the target function
-    let func = instance.exports.get_function(name)
+    let func = instance
+        .exports
+        .get_function(name)
         .map_err(|e| wasmer::RuntimeError::new(format!("Function '{}' not found: {}", name, e)))?;
 
     // Call the function
     let results = func.call(store, &[Value::I32(input_ptr), Value::I32(input_len)])?;
 
     // Parse the result (returns i64 containing pointer and length)
-    let result_packed = results.first()
+    let result_packed = results
+        .first()
         .and_then(|v| v.i64())
         .ok_or_else(|| wasmer::RuntimeError::new("Invalid return type from guest"))?;
 
@@ -152,18 +159,16 @@ pub fn call_raw(
 /// Consume bytes from guest memory
 ///
 /// This is a helper function that reads bytes directly from guest memory.
-pub fn consume_bytes_from_guest(
-    memory: &[u8],
-    ptr: u32,
-    len: u32,
-) -> Result<Vec<u8>, HostError> {
+pub fn consume_bytes_from_guest(memory: &[u8], ptr: u32, len: u32) -> Result<Vec<u8>, HostError> {
     let start = ptr as usize;
     let end = start + len as usize;
 
     if end > memory.len() {
         return Err(HostError::MemoryAccess(format!(
             "out of bounds: {}..{} > {}",
-            start, end, memory.len()
+            start,
+            end,
+            memory.len()
         )));
     }
 
@@ -184,7 +189,9 @@ pub fn move_data_to_guest(
     if end > memory.len() {
         return Err(HostError::MemoryAccess(format!(
             "out of bounds: {}..{} > {}",
-            start, end, memory.len()
+            start,
+            end,
+            memory.len()
         )));
     }
 
@@ -193,10 +200,7 @@ pub fn move_data_to_guest(
 }
 
 /// Build a result for returning to guest
-pub fn build_guest_result(
-    data: &[u8],
-    is_error: bool,
-) -> Result<Vec<u8>, HostError> {
+pub fn build_guest_result(data: &[u8], is_error: bool) -> Result<Vec<u8>, HostError> {
     use aingle_wasmer_codec::encode_with_envelope;
     use aingle_wasmer_common::EnvelopeFlags;
 

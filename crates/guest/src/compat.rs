@@ -8,10 +8,10 @@
 
 use crate::arena::arena_alloc_copy;
 use aingle_wasmer_common::{
-    WasmError, WasmErrorInner, DoubleUSize, WasmSlice, WasmResult,
-    SerializeError, DeserializeError, HostCallError, ErrorKind,
+    DeserializeError, DoubleUSize, ErrorKind, HostCallError, SerializeError, WasmError,
+    WasmErrorInner, WasmResult, WasmSlice,
 };
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 
 /// Guest pointer type (memory offset)
 pub type GuestPtr = u32;
@@ -91,9 +91,7 @@ pub fn host_args(guest_ptr: GuestPtr, len: Len) -> Result<Vec<u8>, DoubleUSize> 
         return Ok(Vec::new());
     }
 
-    let bytes = unsafe {
-        core::slice::from_raw_parts(guest_ptr as *const u8, len as usize)
-    };
+    let bytes = unsafe { core::slice::from_raw_parts(guest_ptr as *const u8, len as usize) };
 
     Ok(bytes.to_vec())
 }
@@ -217,9 +215,8 @@ where
             .map_err(|_| WasmError::Deserialize(DeserializeError::InvalidFormat));
     }
 
-    let response_bytes = unsafe {
-        core::slice::from_raw_parts(slice.ptr as *const u8, slice.len as usize)
-    };
+    let response_bytes =
+        unsafe { core::slice::from_raw_parts(slice.ptr as *const u8, slice.len as usize) };
 
     rmp_serde::from_slice(response_bytes)
         .map_err(|_| WasmError::Deserialize(DeserializeError::InvalidFormat))

@@ -1,7 +1,7 @@
 //! WASM engine configuration and management
 
-use crate::{DEFAULT_METERING_LIMIT, HostError};
 use crate::module::ModuleCache;
+use crate::{HostError, DEFAULT_METERING_LIMIT};
 use std::sync::Arc;
 
 #[cfg(feature = "wasmer_sys_dev")]
@@ -52,8 +52,8 @@ impl WasmEngine {
     /// Create a new WASM engine with the given configuration
     #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
     pub fn new(config: EngineConfig) -> Result<Self, HostError> {
-        use wasmer::sys::{BaseTunables, CompilerConfig, NativeEngineExt};
         use std::sync::Arc as StdArc;
+        use wasmer::sys::{BaseTunables, CompilerConfig, NativeEngineExt};
 
         let cost_function = |_: &wasmer::wasmparser::Operator| -> u64 { 1 };
         let metering = StdArc::new(Metering::new(config.metering_limit, cost_function));
@@ -88,8 +88,7 @@ impl WasmEngine {
     /// Compile WASM bytes into a module
     #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
     pub fn compile(&self, wasm: &[u8]) -> Result<Module, HostError> {
-        Module::new(&self.inner, wasm)
-            .map_err(|e| HostError::Compilation(e.to_string()))
+        Module::new(&self.inner, wasm).map_err(|e| HostError::Compilation(e.to_string()))
     }
 
     /// Compile with caching using a 32-byte key

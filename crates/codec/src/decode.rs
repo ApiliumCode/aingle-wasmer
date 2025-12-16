@@ -1,9 +1,7 @@
 //! Decoding functionality
 
-use aingle_wasmer_common::{
-    EnvelopeHeader, EnvelopeError, WasmError, DeserializeError,
-};
 use crate::checksum::compute_checksum;
+use aingle_wasmer_common::{DeserializeError, EnvelopeError, EnvelopeHeader, WasmError};
 
 /// Decoder for WASM messages
 pub struct Decoder<'a> {
@@ -14,7 +12,10 @@ pub struct Decoder<'a> {
 impl<'a> Decoder<'a> {
     /// Create a new decoder
     pub fn new(buffer: &'a [u8]) -> Self {
-        Self { buffer, position: 0 }
+        Self {
+            buffer,
+            position: 0,
+        }
     }
 
     /// Get remaining bytes
@@ -59,8 +60,7 @@ impl<'a> Decoder<'a> {
     pub fn read_u64(&mut self) -> Result<u64, WasmError> {
         let bytes = self.read_bytes(8)?;
         Ok(u64::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3],
-            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
         ]))
     }
 

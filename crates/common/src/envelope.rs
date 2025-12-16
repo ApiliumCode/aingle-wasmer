@@ -180,15 +180,15 @@ mod tests {
             payload_len: 0,
             checksum: 0,
         };
-        assert!(matches!(invalid.validate(), Err(EnvelopeError::InvalidMagic(0xFFFF))));
+        assert!(matches!(
+            invalid.validate(),
+            Err(EnvelopeError::InvalidMagic(0xFFFF))
+        ));
     }
 
     #[test]
     fn test_flags() {
-        let flags = EnvelopeFlags::combine(&[
-            EnvelopeFlags::Compressed,
-            EnvelopeFlags::IsError,
-        ]);
+        let flags = EnvelopeFlags::combine(&[EnvelopeFlags::Compressed, EnvelopeFlags::IsError]);
 
         assert!(EnvelopeFlags::Compressed.is_set(flags));
         assert!(EnvelopeFlags::IsError.is_set(flags));

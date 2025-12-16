@@ -25,9 +25,10 @@ impl GuestArena {
 
     /// Allocate bytes from the arena
     pub fn alloc(&self, len: usize) -> *mut u8 {
-        self.bump.borrow().alloc_layout(
-            core::alloc::Layout::from_size_align(len, 1).unwrap()
-        ).as_ptr()
+        self.bump
+            .borrow()
+            .alloc_layout(core::alloc::Layout::from_size_align(len, 1).unwrap())
+            .as_ptr()
     }
 
     /// Allocate and copy bytes

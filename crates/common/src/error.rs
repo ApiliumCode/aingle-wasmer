@@ -80,7 +80,11 @@ impl ErrorMessage {
     /// Create from a static string
     pub const fn from_static(s: &'static str) -> Self {
         let bytes_slice = s.as_bytes();
-        let len = if bytes_slice.len() > 128 { 128 } else { bytes_slice.len() };
+        let len = if bytes_slice.len() > 128 {
+            128
+        } else {
+            bytes_slice.len()
+        };
 
         let mut bytes = [0u8; 128];
         let mut i = 0;
@@ -89,7 +93,10 @@ impl ErrorMessage {
             i += 1;
         }
 
-        Self { bytes, len: len as u8 }
+        Self {
+            bytes,
+            len: len as u8,
+        }
     }
 
     /// Get the message as a string slice
@@ -172,7 +179,11 @@ pub enum MemoryError {
     /// Allocation failed
     AllocationFailed { requested: usize },
     /// Out of bounds access
-    OutOfBounds { offset: usize, len: usize, max: usize },
+    OutOfBounds {
+        offset: usize,
+        len: usize,
+        max: usize,
+    },
     /// Alignment error
     Alignment { addr: usize, required: usize },
     /// Arena exhausted
@@ -229,8 +240,9 @@ impl fmt::Display for WasmError {
 #[macro_export]
 macro_rules! wasm_error {
     ($kind:expr, $msg:literal) => {
-        $crate::WasmError::GuestStructured($crate::WasmErrorInner::new($kind, $msg)
-            .with_location(file!(), line!()))
+        $crate::WasmError::GuestStructured(
+            $crate::WasmErrorInner::new($kind, $msg).with_location(file!(), line!()),
+        )
     };
     ($msg:literal) => {
         $crate::wasm_error!($crate::ErrorKind::Unknown, $msg)

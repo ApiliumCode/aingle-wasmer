@@ -10,15 +10,14 @@
 
 #![warn(missing_docs)]
 
-mod encode;
-mod decode;
 mod checksum;
+mod decode;
+mod encode;
 
-pub use encode::*;
-pub use decode::*;
 pub use checksum::*;
+pub use decode::*;
+pub use encode::*;
 
 pub use aingle_wasmer_common::{
-    EnvelopeHeader, EnvelopeFlags, WasmSlice, WasmResult,
-    WasmEncode, WasmDecode, WasmError,
+    EnvelopeFlags, EnvelopeHeader, WasmDecode, WasmEncode, WasmError, WasmResult, WasmSlice,
 };

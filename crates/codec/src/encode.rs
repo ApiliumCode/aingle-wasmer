@@ -1,7 +1,7 @@
 //! Encoding functionality
 
-use aingle_wasmer_common::{EnvelopeHeader, WasmError, WasmSlice};
 use crate::checksum::compute_checksum;
+use aingle_wasmer_common::{EnvelopeHeader, WasmError, WasmSlice};
 
 /// Encoder for WASM messages
 pub struct Encoder<'a> {
@@ -12,7 +12,10 @@ pub struct Encoder<'a> {
 impl<'a> Encoder<'a> {
     /// Create a new encoder with the given buffer
     pub fn new(buffer: &'a mut [u8]) -> Self {
-        Self { buffer, position: 0 }
+        Self {
+            buffer,
+            position: 0,
+        }
     }
 
     /// Get remaining capacity
@@ -32,7 +35,7 @@ impl<'a> Encoder<'a> {
                 aingle_wasmer_common::SerializeError::BufferTooSmall {
                     needed: bytes.len(),
                     available: self.remaining(),
-                }
+                },
             ));
         }
         self.buffer[self.position..self.position + bytes.len()].copy_from_slice(bytes);
@@ -79,7 +82,7 @@ pub fn encode_with_envelope(
             aingle_wasmer_common::SerializeError::BufferTooSmall {
                 needed: total_size,
                 available: output.len(),
-            }
+            },
         ));
     }
 

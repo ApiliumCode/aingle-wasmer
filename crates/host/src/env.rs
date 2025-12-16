@@ -4,8 +4,8 @@
 //! memory management and data transfer between host and guest.
 
 use crate::HostError;
-use aingle_wasmer_common::{WasmError, WasmSlice, WasmResult};
-use serde::{Serialize, de::DeserializeOwned};
+use aingle_wasmer_common::{WasmError, WasmResult, WasmSlice};
+use serde::{de::DeserializeOwned, Serialize};
 
 #[cfg(feature = "wasmer_sys_dev")]
 use wasmer::{Memory, MemoryView, StoreMut, TypedFunction};
@@ -63,7 +63,9 @@ impl Env {
         guest_ptr: GuestPtr,
         len: Len,
     ) -> Result<Vec<u8>, HostError> {
-        let memory = self.memory.as_ref()
+        let memory = self
+            .memory
+            .as_ref()
             .ok_or_else(|| HostError::MemoryAccess("Memory not initialized".to_string()))?;
 
         let view = memory.view(store);
@@ -73,7 +75,9 @@ impl Env {
         if end > view.data_size() {
             return Err(HostError::MemoryAccess(format!(
                 "Out of bounds: {}..{} > {}",
-                start, end, view.data_size()
+                start,
+                end,
+                view.data_size()
             )));
         }
 
@@ -127,15 +131,19 @@ impl Env {
         store: &mut StoreMut<'_>,
         bytes: &[u8],
     ) -> Result<u64, HostError> {
-        let memory = self.memory.as_ref()
+        let memory = self
+            .memory
+            .as_ref()
             .ok_or_else(|| HostError::MemoryAccess("Memory not initialized".to_string()))?;
-        let allocate = self.allocate.as_ref()
-            .ok_or_else(|| HostError::MemoryAccess("Allocate function not initialized".to_string()))?;
+        let allocate = self.allocate.as_ref().ok_or_else(|| {
+            HostError::MemoryAccess("Allocate function not initialized".to_string())
+        })?;
 
         let len = bytes.len() as i32;
 
         // Allocate memory in the guest
-        let ptr = allocate.call(store, len)
+        let ptr = allocate
+            .call(store, len)
             .map_err(|e| HostError::MemoryAccess(format!("Failed to allocate: {}", e)))?;
 
         // Write bytes to guest memory
@@ -161,7 +169,8 @@ impl Env {
         len: Len,
     ) -> Result<(), HostError> {
         if let Some(deallocate) = self.deallocate.as_ref() {
-            deallocate.call(store, ptr as i32, len as i32)
+            deallocate
+                .call(store, ptr as i32, len as i32)
                 .map_err(|e| HostError::MemoryAccess(format!("Failed to deallocate: {}", e)))?;
         }
         Ok(())

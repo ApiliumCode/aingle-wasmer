@@ -23,27 +23,24 @@
 #![warn(missing_docs)]
 
 mod arena;
-mod memory;
-mod host_call;
 mod compat;
+mod host_call;
+mod memory;
 
 pub mod prelude;
 
 pub use arena::*;
-pub use memory::{host_args_envelope, read_bytes, return_ok, return_err};
 pub use host_call::*;
+pub use memory::{host_args_envelope, read_bytes, return_err, return_ok};
 // Export compat functions but NOT SerializedBytes (conflicts with aingle_zome_types)
-pub use compat::{GuestPtr, Len, host_args, return_ptr, return_err_ptr, host_call};
+pub use compat::{host_args, host_call, return_err_ptr, return_ptr, GuestPtr, Len};
 
 pub use aingle_wasmer_common::{
-    WasmError, WasmErrorInner, WasmSlice, WasmResult, DoubleUSize,
-    WasmEncode, WasmDecode, WasmPrimitive,
-    SerializeError, DeserializeError, HostCallError, GuestCallError,
+    DeserializeError, DoubleUSize, GuestCallError, HostCallError, SerializeError, WasmDecode,
+    WasmEncode, WasmError, WasmErrorInner, WasmPrimitive, WasmResult, WasmSlice,
 };
 
-pub use aingle_wasmer_codec::{
-    encode_with_envelope, decode_envelope,
-};
+pub use aingle_wasmer_codec::{decode_envelope, encode_with_envelope};
 
 // Re-export serde for convenience
 pub use serde;
