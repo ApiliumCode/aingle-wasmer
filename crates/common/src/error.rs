@@ -109,7 +109,11 @@ pub struct WasmErrorInnerBuilder {
 
 impl WasmErrorInnerBuilder {
     /// Add file location
-    pub const fn with_location(self, _file: &'static str, _line: u32) -> WasmErrorInnerBuilderWithLocation {
+    pub const fn with_location(
+        self,
+        _file: &'static str,
+        _line: u32,
+    ) -> WasmErrorInnerBuilderWithLocation {
         WasmErrorInnerBuilderWithLocation {
             kind: self.kind,
             message: self.message,
