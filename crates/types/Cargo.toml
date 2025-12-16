@@ -1,0 +1,17 @@
+[package]
+name = "aingle_wasm_types"
+version.workspace = true
+description = "Core types for AIngle WASM runtime - zero dependencies"
+documentation = "https://docs.rs/aingle_wasm_types"
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+# No dependencies - pure Rust types
+[dependencies]
+
+[features]
+default = []
+std = []

@@ -1,0 +1,36 @@
+name: Prepare a release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "Semver version for the release"
+        required: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update version in Cargo.toml
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' Cargo.toml
+
+      - name: Create release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b release/${{ inputs.version }}
+          git add -A
+          git commit -m "chore: prepare release ${{ inputs.version }}"
+          git push origin release/${{ inputs.version }}
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "Release ${{ inputs.version }}"
+          body: "Automated release preparation for version ${{ inputs.version }}"
+          branch: release/${{ inputs.version }}
+          base: main

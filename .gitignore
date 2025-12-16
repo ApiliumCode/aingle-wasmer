@@ -1,0 +1,6 @@
+.cargo
+target
+perf.data
+perf.data.old
+flamegraph.svg
+.vscode
