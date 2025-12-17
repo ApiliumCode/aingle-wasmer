@@ -1,12 +1,25 @@
-# aingle-wasmer
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ApiliumCode/aingle/main/assets/aingle.svg" alt="AIngle Logo" width="200"/>
+</p>
 
-WASM host/guest integration library for AIngle - optimized for IoT & AI workloads.
+<h1 align="center">aingle-wasmer</h1>
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+<p align="center">
+  <strong>WASM host/guest integration library for AIngle - optimized for IoT & AI</strong>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/aingle_wasm_host"><img src="https://img.shields.io/crates/v/aingle_wasm_host.svg" alt="Crates.io"/></a>
+  <a href="https://docs.rs/aingle_wasm_host"><img src="https://docs.rs/aingle_wasm_host/badge.svg" alt="Documentation"/></a>
+  <a href="https://github.com/ApiliumCode/aingle-wasmer/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"/></a>
+  <a href="https://github.com/ApiliumCode/aingle-wasmer/actions"><img src="https://github.com/ApiliumCode/aingle-wasmer/workflows/CI/badge.svg" alt="CI Status"/></a>
+</p>
+
+---
 
 ## Overview
 
-AIngle WASM provides a high-performance, memory-efficient runtime for executing WebAssembly code within the AIngle platform. Designed specifically for IoT devices and AI agents with:
+High-performance, memory-efficient WASM runtime for executing WebAssembly code within the AIngle platform. Designed specifically for IoT devices and AI agents with:
 
 - **Zero-copy envelope protocol** with versioning and checksums
 - **Arena-based memory allocation** for minimal fragmentation
@@ -38,10 +51,10 @@ AIngle WASM provides a high-performance, memory-efficient runtime for executing 
 
 | Crate | Description | no_std |
 |-------|-------------|--------|
-| `aingle_wasm_types` | Core types, envelope, traits | ✅ |
-| `aingle_wasm_codec` | Encode/decode with CRC32 | ❌ |
-| `aingle_wasm_guest` | Guest utilities + arena allocator | ❌ |
-| `aingle_wasm_host` | Wasmer 6.0 execution engine | ❌ |
+| `aingle_wasm_types` | Core types, envelope, traits | Yes |
+| `aingle_wasm_codec` | Encode/decode with CRC32 | No |
+| `aingle_wasm_guest` | Guest utilities + arena allocator | No |
+| `aingle_wasm_host` | Wasmer 6.0 execution engine | No |
 
 ## Quick Start
 
@@ -81,16 +94,12 @@ host_externs!(__my_host_fn);
 // Entry point function
 #[no_mangle]
 pub extern "C" fn my_function(ptr: u32, len: u32) -> u64 {
-    // Decode input from host
     let input = match host_args(ptr, len) {
         Ok(bytes) => bytes,
         Err(e) => return return_err(b"failed to decode input"),
     };
 
-    // Process...
     let output = process(input);
-
-    // Return result to host
     return_ok(&output)
 }
 ```
@@ -109,61 +118,50 @@ pub extern "C" fn my_function(ptr: u32, len: u32) -> u64 {
 
 ### Flags
 
-- `0x01` - Compressed (LZ4)
-- `0x02` - Encrypted
-- `0x04` - Expects response
-- `0x08` - Is error response
+| Value | Meaning |
+|-------|---------|
+| `0x01` | Compressed (LZ4) |
+| `0x02` | Encrypted |
+| `0x04` | Expects response |
+| `0x08` | Is error response |
 
-## Comparison with Previous Design
+## Configuration
 
-| Aspect | holochain-wasmer | aingle-wasmer |
-|--------|------------------|---------------|
-| Protocol | ptr+len (raw) | Versioned envelope |
-| Checksum | None | CRC32 |
-| Memory | leak/deallocate | Arena (bumpalo) |
-| Serialization | MessagePack | Custom + CRC32 |
-| no_std types | No | Yes |
+```rust
+EngineConfig {
+    metering_limit: 100_000_000_000,  // Max operations
+    canonicalize_nans: true,          // Deterministic NaN
+    cache_size: 256 * 1024 * 1024,    // 256MB cache
+    static_memory_bound: 0x4000,      // iOS compatibility
+}
+```
 
 ## Features
 
 ```toml
 [features]
 default = ["wasmer_sys_dev"]
-wasmer_sys_dev = ["wasmer/cranelift"]  # Fast compile, good for dev
+wasmer_sys_dev = ["wasmer/cranelift"]  # Fast compile
 wasmer_sys_prod = ["wasmer/llvm"]      # Optimized runtime
-```
-
-## Configuration
-
-```rust
-EngineConfig {
-    // Max operations before timeout (100B default)
-    metering_limit: 100_000_000_000,
-    // Canonicalize NaN for determinism
-    canonicalize_nans: true,
-    // Module cache size (256MB default)
-    cache_size: 256 * 1024 * 1024,
-    // iOS compatibility (0x4000 default)
-    static_memory_bound: 0x4000,
-}
 ```
 
 ## Testing
 
 ```bash
 cargo test --workspace
-```
-
-## Benchmarks
-
-```bash
 cargo bench
 ```
 
+## Part of AIngle
+
+This crate is part of the [AIngle](https://github.com/ApiliumCode/aingle) ecosystem - a Semantic DAG framework for IoT and distributed AI applications.
+
 ## License
 
-Apache-2.0
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
-## Contributing
+---
 
-Contributions welcome! Please read our contributing guidelines first.
+<p align="center">
+  <sub>Maintained by <a href="https://apilium.com">Apilium Technologies</a> - Tallinn, Estonia</sub>
+</p>
