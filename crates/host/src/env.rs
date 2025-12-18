@@ -4,14 +4,14 @@
 //! memory management and data transfer between host and guest.
 
 use crate::HostError;
-use aingle_wasmer_common::{WasmError, WasmResult, WasmSlice};
+use aingle_wasmer_common::WasmSlice;
 use serde::{de::DeserializeOwned, Serialize};
 
 #[cfg(feature = "wasmer_sys_dev")]
-use wasmer::{Memory, MemoryView, StoreMut, TypedFunction};
+use wasmer::{Memory, StoreMut, TypedFunction};
 
 #[cfg(feature = "wasmer_sys_prod")]
-use wasmer::{Memory, MemoryView, StoreMut, TypedFunction};
+use wasmer::{Memory, StoreMut, TypedFunction};
 
 /// Guest pointer type
 pub type GuestPtr = u32;
@@ -60,14 +60,15 @@ impl Env {
     /// # Returns
     /// * `Ok(T)` - The deserialized value
     /// * `Err(HostError)` - If memory access or deserialization fails
-    pub fn consume_guest_input<T: DeserializeOwned>(
+    pub fn consume_guest_input<T: DeserializeOwned + std::fmt::Debug>(
         &self,
         store: &mut StoreMut<'_>,
         guest_ptr: GuestPtr,
         len: Len,
     ) -> Result<T, HostError> {
         let bytes = self.consume_bytes_from_guest(store, guest_ptr, len)?;
-        rmp_serde::from_slice(&bytes)
+        // Use aingle_middleware_bytes for consistent serialization format
+        aingle_middleware_bytes::decode(&bytes)
             .map_err(|e| HostError::Serialization(format!("Failed to deserialize input: {}", e)))
     }
 
@@ -130,13 +131,13 @@ impl Env {
     /// # Returns
     /// * `Ok(u64)` - Combined pointer/length value (ptr << 32 | len)
     /// * `Err(HostError)` - If allocation or memory write fails
-    pub fn move_data_to_guest<T: Serialize>(
+    pub fn move_data_to_guest<T: Serialize + std::fmt::Debug>(
         &self,
         store: &mut StoreMut<'_>,
         data: T,
     ) -> Result<u64, HostError> {
-        // Serialize the data
-        let bytes = rmp_serde::to_vec_named(&data)
+        // Use aingle_middleware_bytes for consistent serialization format
+        let bytes = aingle_middleware_bytes::encode(&data)
             .map_err(|e| HostError::Serialization(format!("Failed to serialize: {}", e)))?;
 
         self.move_bytes_to_guest(store, &bytes)

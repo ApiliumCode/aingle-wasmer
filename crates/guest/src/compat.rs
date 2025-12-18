@@ -8,8 +8,7 @@
 
 use crate::arena::arena_alloc_copy;
 use aingle_wasmer_common::{
-    DeserializeError, DoubleUSize, ErrorKind, HostCallError, SerializeError, WasmError,
-    WasmErrorInner, WasmResult, WasmSlice,
+    DeserializeError, DoubleUSize, HostCallError, SerializeError, WasmError, WasmResult, WasmSlice,
 };
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -32,15 +31,21 @@ impl SerializedBytes {
     }
 
     /// Encode a value to serialized bytes
-    pub fn encode<T: Serialize>(value: &T) -> Result<Self, WasmError> {
-        let bytes = rmp_serde::to_vec_named(value)
+    ///
+    /// Uses aingle_middleware_bytes for consistent serialization format
+    /// with the host and rest of the system.
+    pub fn encode<T: Serialize + std::fmt::Debug>(value: &T) -> Result<Self, WasmError> {
+        let bytes = aingle_middleware_bytes::encode(value)
             .map_err(|_| WasmError::Serialize(SerializeError::UnsupportedType))?;
         Ok(Self(bytes))
     }
 
     /// Decode from serialized bytes
-    pub fn decode<T: DeserializeOwned>(&self) -> Result<T, WasmError> {
-        rmp_serde::from_slice(&self.0)
+    ///
+    /// Uses aingle_middleware_bytes for consistent deserialization format
+    /// with the host and rest of the system.
+    pub fn decode<T: DeserializeOwned + std::fmt::Debug>(&self) -> Result<T, WasmError> {
+        aingle_middleware_bytes::decode(&self.0)
             .map_err(|_| WasmError::Deserialize(DeserializeError::InvalidFormat))
     }
 
@@ -109,7 +114,7 @@ pub fn host_args(guest_ptr: GuestPtr, len: Len) -> Result<Vec<u8>, DoubleUSize> 
 ///
 /// # Returns
 /// A DoubleUSize encoding the pointer and length
-pub fn return_ptr<T: Serialize>(value: T) -> DoubleUSize {
+pub fn return_ptr<T: Serialize + std::fmt::Debug>(value: T) -> DoubleUSize {
     match SerializedBytes::encode(&value) {
         Ok(sb) => {
             let bytes = sb.0;
@@ -136,7 +141,7 @@ pub fn return_ptr<T: Serialize>(value: T) -> DoubleUSize {
 /// A DoubleUSize encoding the error pointer and length
 pub fn return_err_ptr(error: WasmError) -> DoubleUSize {
     // Convert WasmError to a serializable error struct
-    #[derive(Serialize)]
+    #[derive(Debug, Serialize)]
     struct SerializableError {
         error_type: String,
         message: String,
@@ -185,10 +190,10 @@ pub fn host_call<I, O>(
     input: I,
 ) -> Result<O, WasmError>
 where
-    I: Serialize,
-    O: DeserializeOwned,
+    I: Serialize + std::fmt::Debug,
+    O: DeserializeOwned + std::fmt::Debug,
 {
-    // Serialize input
+    // Serialize input using aingle_middleware_bytes for consistency
     let input_bytes = SerializedBytes::encode(&input)?;
     let bytes = input_bytes.0;
     let len = bytes.len() as u32;
@@ -208,17 +213,17 @@ where
         return Err(WasmError::HostCall(HostCallError::HostError(0)));
     }
 
-    // Deserialize success response
+    // Deserialize success response using aingle_middleware_bytes for consistency
     if slice.is_empty() {
         // Try to decode empty/unit type
-        return rmp_serde::from_slice(&[])
+        return aingle_middleware_bytes::decode(&[])
             .map_err(|_| WasmError::Deserialize(DeserializeError::InvalidFormat));
     }
 
     let response_bytes =
         unsafe { core::slice::from_raw_parts(slice.ptr as *const u8, slice.len as usize) };
 
-    rmp_serde::from_slice(response_bytes)
+    aingle_middleware_bytes::decode(response_bytes)
         .map_err(|_| WasmError::Deserialize(DeserializeError::InvalidFormat))
 }
 

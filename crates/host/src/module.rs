@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
-use wasmer::{Engine, Module, Store};
+use wasmer::{Engine, Module};
 
 /// Cache for compiled WASM modules
 ///
@@ -165,6 +165,16 @@ impl ModuleCache {
     /// Get the cache path
     pub fn cache_path(&self) -> Option<&PathBuf> {
         self.cache_path.as_ref()
+    }
+
+    /// Get a reference to the engine used for compiling modules
+    ///
+    /// This is necessary to create a Store that is compatible with
+    /// the compiled modules. In Wasmer 6.0+, modules must be instantiated
+    /// with a Store that uses the same Engine that compiled them.
+    #[cfg(any(feature = "wasmer_sys_dev", feature = "wasmer_sys_prod"))]
+    pub fn engine(&self) -> &Engine {
+        &self.engine
     }
 }
 

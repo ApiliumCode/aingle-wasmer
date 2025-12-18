@@ -98,6 +98,7 @@ dependencies = [
 name = "aingle_wasmer_host"
 version = "0.0.1"
 dependencies = [
+ "aingle_middleware_bytes",
  "aingle_wasmer_codec",
  "aingle_wasmer_common",
  "bytes",
